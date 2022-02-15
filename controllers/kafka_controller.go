@@ -68,59 +68,60 @@ func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if err != nil {
 		println(err)
 
-	}
-
-	data, err := json.Marshal(kafkares)
-	err = json.Unmarshal(data, &resultJson)
-	if err != nil {
-		println(err)
-	}
-
-	listeners := ((resultJson["spec"].(map[string]interface{}))["kafka"].(map[string]interface{}))["listeners"].([]interface{})
-	resourceName := (resultJson["metadata"].(map[string]interface{}))["name"].(string)
-	resourceNamespace := (resultJson["metadata"].(map[string]interface{}))["namespace"].(string)
-
-	secret := &v1.Secret{}
-	reqSecret := ctrl.Request{}
-	reqSecret.NamespacedName.Name = resourceName + "-cluster-ca-cert"
-	reqSecret.NamespacedName.Namespace = resourceNamespace
-
-	err = r.Get(ctx, reqSecret.NamespacedName, secret)
-	if err != nil {
-		println(err)
 	} else {
 
-		n := 0
-		for n < len(listeners) {
-
-			listener := listeners[n].(map[string]interface{})
-			name := listener["name"].(string)
-			port := int(listener["port"].(float64))
-			openType := listener["type"].(string)
-
-			bootStrapServerKey := strings.ToUpper(name) + "_" + strings.ToUpper(openType) + "_" + "BOOTSTRAP_SERVERS"
-			bootStrapServerValue := []byte(resourceName + "-kafka-bootstrap." + resourceNamespace + ".svc:" + strconv.Itoa(port))
-
-			secret.Data[bootStrapServerKey] = bootStrapServerValue
-			println(bootStrapServerKey, " : ", bootStrapServerValue)
-
-			n++
-
-		}
-
-		goto CREATE
-	}
-
-CREATE:
-	{
-		secret.Name = resourceName + "-service-binding-credentials"
-		secret.ResourceVersion = ""
-		err = r.Create(ctx, secret, &client.CreateOptions{})
+		data, err := json.Marshal(kafkares)
+		err = json.Unmarshal(data, &resultJson)
 		if err != nil {
 			println(err)
 		}
-	}
 
+		listeners := ((resultJson["spec"].(map[string]interface{}))["kafka"].(map[string]interface{}))["listeners"].([]interface{})
+		resourceName := (resultJson["metadata"].(map[string]interface{}))["name"].(string)
+		resourceNamespace := (resultJson["metadata"].(map[string]interface{}))["namespace"].(string)
+
+		secret := &v1.Secret{}
+		reqSecret := ctrl.Request{}
+		reqSecret.NamespacedName.Name = resourceName + "-cluster-ca-cert"
+		reqSecret.NamespacedName.Namespace = resourceNamespace
+
+		err = r.Get(ctx, reqSecret.NamespacedName, secret)
+		if err != nil {
+			println(err)
+		} else {
+
+			n := 0
+			for n < len(listeners) {
+
+				listener := listeners[n].(map[string]interface{})
+				name := listener["name"].(string)
+				port := int(listener["port"].(float64))
+				openType := listener["type"].(string)
+
+				bootStrapServerKey := strings.ToUpper(name) + "_" + strings.ToUpper(openType) + "_" + "BOOTSTRAP_SERVERS"
+				bootStrapServerValue := []byte(resourceName + "-kafka-bootstrap." + resourceNamespace + ".svc:" + strconv.Itoa(port))
+
+				secret.Data[bootStrapServerKey] = bootStrapServerValue
+				println(bootStrapServerKey, " : ", bootStrapServerValue)
+
+				n++
+
+			}
+
+			goto CREATE
+		}
+
+	CREATE:
+		{
+			secret.Name = resourceName + "-service-binding-credentials"
+			secret.ResourceVersion = ""
+			err = r.Create(ctx, secret, &client.CreateOptions{})
+			if err != nil {
+				println(err)
+			}
+		}
+
+	}
 	return ctrl.Result{}, nil
 }
 
