@@ -1,0 +1,14 @@
+mode: set
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:60.97,68.16 5 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:73.2,75.16 3 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:79.2,89.16 9 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:124.2,124.27 1 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:68.16,71.3 1 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:75.16,77.3 1 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:89.16,91.3 1 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:91.8,94.26 2 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:111.3,111.14 1 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:94.26,109.4 9 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:115.2,119.17 4 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:119.17,121.4 1 0
+github.com/planner26/kafka-bindableOperator2/controllers/kafka_controller.go:128.68,132.2 1 0

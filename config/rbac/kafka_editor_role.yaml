@@ -1,0 +1,24 @@
+# permissions for end users to edit kafkas.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kafka-editor-role
+rules:
+- apiGroups:
+  - kafka.strimzi.io.my.domain
+  resources:
+  - kafkas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kafka.strimzi.io.my.domain
+  resources:
+  - kafkas/status
+  verbs:
+  - get

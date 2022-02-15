@@ -1,0 +1,19 @@
+domain: my.domain
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: bindableoperator2
+repo: github.com/planner26/kafka-bindableOperator2
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: kafka.strimzi.io
+  kind: Kafka
+  path: github.com/planner26/kafka-bindableOperator2/api/v1beta2
+  version: v1beta2
+version: "3"

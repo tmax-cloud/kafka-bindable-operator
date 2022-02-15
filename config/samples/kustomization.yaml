@@ -1,0 +1,4 @@
+## Append samples you want in your CSV to this file as resources ##
+resources:
+- kafka.strimzi.io_v1beta2_kafka.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
