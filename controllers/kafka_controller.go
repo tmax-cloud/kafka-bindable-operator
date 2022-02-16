@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,6 +89,7 @@ func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		err = r.Get(ctx, reqSecret.NamespacedName, secret)
 		if err != nil {
 			println(err)
+			return ctrl.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
 		} else {
 
 			n := 0
