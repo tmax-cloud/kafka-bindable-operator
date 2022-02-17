@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -99,6 +100,15 @@ func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 				name := listener["name"].(string)
 				port := int(listener["port"].(float64))
 				openType := listener["type"].(string)
+				tls := listener["tls"].(bool)
+
+				fmt.Println("tls: ", tls)
+
+				if !tls {
+					for k := range secret.Data {
+						delete(secret.Data, k)
+					}
+				}
 
 				bootStrapServerKey := strings.ToUpper(name) + "_" + strings.ToUpper(openType) + "_" + "BOOTSTRAP_SERVERS"
 				bootStrapServerValue := []byte(resourceName + "-kafka-bootstrap." + resourceNamespace + ".svc:" + strconv.Itoa(port))
