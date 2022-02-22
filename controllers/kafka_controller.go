@@ -44,6 +44,7 @@ type Listeners struct {
 type KafkaReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	// Log    logr.Logger
 }
 
 //+kubebuilder:rbac:groups=kafka.strimzi.io.my.domain,resources=kafkas,verbs=get;list;watch;create;update;patch;delete
@@ -60,7 +61,8 @@ type KafkaReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+
+	reqLog := log.FromContext(ctx)
 
 	kafkares := &kafkastrimziiov1beta2.Kafka{}
 
@@ -68,14 +70,14 @@ func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	err := r.Get(ctx, req.NamespacedName, kafkares)
 	if err != nil {
-		println(err)
+		reqLog.Error(err, "error occured while get kafka")
 
 	} else {
 
-		data, err := json.Marshal(kafkares)
-		err = json.Unmarshal(data, &resultJson)
-		if err != nil {
-			println(err)
+		data, errJson := json.Marshal(kafkares)
+		errJson = json.Unmarshal(data, &resultJson)
+		if errJson != nil {
+			reqLog.Error(errJson, "error occured while parsing Json")
 		}
 
 		listeners := ((resultJson["spec"].(map[string]interface{}))["kafka"].(map[string]interface{}))["listeners"].([]interface{})
@@ -87,9 +89,9 @@ func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		reqSecret.NamespacedName.Name = resourceName + "-cluster-ca-cert"
 		reqSecret.NamespacedName.Namespace = resourceNamespace
 
-		err = r.Get(ctx, reqSecret.NamespacedName, secret)
-		if err != nil {
-			println(err)
+		errGetSecret := r.Get(ctx, reqSecret.NamespacedName, secret)
+		if errGetSecret != nil {
+			reqLog.Error(errGetSecret, "error occured while get secret")
 			return ctrl.Result{Requeue: true, RequeueAfter: 5 * time.Second}, nil
 		} else {
 
@@ -102,7 +104,7 @@ func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 				openType := listener["type"].(string)
 				tls := listener["tls"].(bool)
 
-				fmt.Println("tls: ", tls)
+				fmt.Println("TLS Type: ", tls)
 
 				if !tls {
 					for k := range secret.Data {
@@ -114,23 +116,46 @@ func (r *KafkaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 				bootStrapServerValue := []byte(resourceName + "-kafka-bootstrap." + resourceNamespace + ".svc:" + strconv.Itoa(port))
 
 				secret.Data[bootStrapServerKey] = bootStrapServerValue
-				println(bootStrapServerKey, " : ", bootStrapServerValue)
+				reqLog.Info(bootStrapServerKey, " : ", &bootStrapServerValue)
 
 				n++
 
 			}
 
-			goto CREATE
-		}
+			bindableSecret := &v1.Secret{}
+			reqBindableSecret := ctrl.Request{}
+			reqBindableSecret.NamespacedName.Name = resourceName + "-service-binding-credentials"
+			reqBindableSecret.NamespacedName.Namespace = resourceNamespace
 
-	CREATE:
-		{
-			secret.Name = resourceName + "-service-binding-credentials"
-			secret.ResourceVersion = ""
-			err = r.Create(ctx, secret, &client.CreateOptions{})
-			if err != nil {
-				println(err)
+			errGetBindableSecret := r.Get(ctx, reqBindableSecret.NamespacedName, bindableSecret)
+			if errGetBindableSecret != nil { //create new secret if not exist
+				reqLog.Error(errGetBindableSecret, "error occured while finding bindableSecret")
+
+				secret.Name = resourceName + "-service-binding-credentials"
+				secret.ResourceVersion = ""
+
+				errCreateSecret := r.Create(ctx, secret, &client.CreateOptions{})
+				if errCreateSecret != nil {
+					reqLog.Error(errCreateSecret, "error occured while create credential")
+				} else {
+					reqLog.Info("new credential created")
+				}
+
+			} else { //update secret data if exist
+
+				reqLog.Info("secret already exist.... update secret data")
+
+				//update secret data
+				bindableSecret.Data = secret.Data
+
+				errUpdateCredential := r.Update(ctx, bindableSecret, &client.UpdateOptions{})
+				if errUpdateCredential != nil {
+					reqLog.Error(errUpdateCredential, "error occured while update credential")
+				} else {
+					reqLog.Info("credential updated")
+				}
 			}
+
 		}
 
 	}
